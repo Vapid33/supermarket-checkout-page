@@ -12,12 +12,11 @@ import { Banknote, QrCode, CreditCard } from "lucide-react" // Import missing ic
 import { se } from "date-fns/locale"
 
 interface OrdersViewProps {
-  orders: Order[]
   onRefund: (orderId: string, amount: number) => void
 }
 
-// export function OrdersView({ orders, onRefund }: OrdersViewProps) {
-export function OrdersView(onRefund: (orderId: string, amount: number) => void) {
+ export function OrdersView({  onRefund }: OrdersViewProps) {
+//export function OrdersView(onRefund: (orderId: string, amount: number) => void) {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [showRefundDialog, setShowRefundDialog] = useState(false)

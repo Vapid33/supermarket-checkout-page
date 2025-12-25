@@ -82,7 +82,7 @@ export default function POSPage() {
       <main className="flex-1 flex flex-col overflow-hidden">
         {activeTab === "cashier" && <CashierView onNewOrder={handleNewOrder} />}
         {/* {activeTab === "orders" && <OrdersView orders={orders} onRefund={handleRefund} />} */}
-         {activeTab === "orders" && <OrdersView  />}
+         {activeTab === "orders" && <OrdersView  onRefund={handleRefund}/>}
         {activeTab === "stats" && <StatsView orders={orders} />}
         {activeTab === "settings" && <SettingsView />}
       </main>
