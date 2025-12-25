@@ -47,7 +47,8 @@ export function CartPanel({ items, onUpdateQuantity, onRemoveItem, onClearCart, 
             <div key={item.id} className="flex gap-3 p-3 bg-muted/50 rounded-lg">
               <div className="w-12 h-12 bg-background rounded-lg flex-shrink-0 overflow-hidden">
                 <img
-                  src={`/.jpg?height=48&width=48&query=${encodeURIComponent(item.name)}`}
+                  // src={`/.jpg?height=48&width=48&query=${encodeURIComponent(item.name)}`}
+                  src={item.image}
                   alt={item.name}
                   className="w-full h-full object-cover"
                 />

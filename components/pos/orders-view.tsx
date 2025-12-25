@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Eye, Undo2, Calendar } from "lucide-react"
 import { Banknote, QrCode, CreditCard } from "lucide-react" // Import missing icons
 import { se } from "date-fns/locale"
-
+import { Loader2 } from "lucide-react"
 interface OrdersViewProps {
   onRefund: (orderId: string, amount: number) => void
 }
@@ -24,40 +24,63 @@ interface OrdersViewProps {
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
   const [orders, setOrders] = useState<Order[]>([])
-  useEffect(() => {
-      const fetchOrders = async () => {
-        try {
-          const res = await fetch(
-            "http://172.20.10.6:8088/merchant/queryOrders",
-          )
-  
-          if (!res.ok) {
-            throw new Error("Failed to fetch orders")
-          }
-  
-          const result = await res.json()
-          console.log(result)
-  
-          // ⭐ 关键：接口数据 → Order[] 适配
-          const adaptedOrders: Order[] = result.data.map((item: any) => ({
-            id: item.raw.referenceNumber,
-            total: item.raw.transactionAmount,
-            status: item.orderState,
-            createdAt: new Date(item.raw.originalTransactionTime),
-            refundAmount: 0,
-            items: [],
-          }))
-  
-          setOrders(adaptedOrders)
-        } catch (error) {
-          console.error("获取订单失败:", error)
-        } finally {
+  const [refundLoading, setRefundLoading] = useState(false)
+  const [refundMessage, setRefundMessage] = useState("")
+   useEffect(() => {
 
-        }
-      }
-  
-      fetchOrders()
-    }, [])
+     fetchOrders()
+   }, [])
+   const fetchOrders = async () => {
+     try {
+       const res = await fetch(
+         "http://172.20.10.6:8088/merchant/queryOrders",
+       )
+
+       if (!res.ok) {
+         throw new Error("Failed to fetch orders")
+       }
+
+       const result = await res.json()
+       console.log(result)
+       
+
+       // ⭐ 关键：接口数据 → Order[] 适配
+       const adaptedOrders: Order[] = result.data.map((item: any) => {
+         // ⭐ 1️⃣ 解析 transactionDetail（字符串 → 对象）
+         let parsedItems: any[] = []
+
+         try {
+           const detailObj = JSON.parse(item.raw.transactionDetail)
+           parsedItems = detailObj.items || []
+         } catch (e) {
+           console.error("transactionDetail 解析失败", item.raw.transactionDetail)
+         }
+
+         // ⭐ 2️⃣ 字段适配成前端需要的 items 结构
+         const adaptedItems = parsedItems.map((it: any, index: number) => ({
+           id: `${item.raw.referenceNumber}-${index}`,
+           name: it.name,
+           quantity: it.quantity,
+           price: it.unitPrice, // ⚠️ 注意字段名转换
+         }))
+
+         return {
+           id: item.raw.referenceNumber,
+           total: item.raw.transactionAmount,
+           status: item.orderState,
+           createdAt: new Date(item.raw.createdAt),
+           refundAmount: 0,
+           items: adaptedItems,
+         }
+       })
+
+       setOrders(adaptedOrders)
+     } catch (error) {
+       console.error("获取订单失败:", error)
+     } finally {
+
+     }
+   }
 
   const filteredOrders = orders.filter((order) => {
     // 订单号筛选
@@ -130,40 +153,43 @@ interface OrdersViewProps {
 
   const amount = Number.parseFloat(refundAmount)
 
-    try {
-      const result = await refundOrder(referenceNumber)
-      setTimeout(() => {
-        if (result.statusCode !== "00") {
-          alert(`退款失败：${result.msg}`)
-          return
-        }
+  try {
+    // ⭐ 1️⃣ 进入退款中状态
+    setRefundLoading(true)
+    setRefundMessage("退款正在发起，请稍等")
 
-        // ✅ 退款成功，更新订单状态
-        const isFullRefund = amount === selectedOrder.total
+    const result = await refundOrder(referenceNumber)
 
-        selectedOrder.refundAmount =
-          (selectedOrder.refundAmount || 0) + amount
-
-        selectedOrder.status = isFullRefund
-          ? "refunded"
-          : "partial_refund"
-
-        // 如果你 orders 是 props，需要通过父组件更新
-        // 这里假设父组件会根据 onRefund 更新状态
-        onRefund(selectedOrder.id, amount)
-
-        // 关闭弹窗 & 清理
-        setShowRefundDialog(false)
-        setRefundAmount("")
-        setSelectedOrder(null)
-      }, 30000); // 模拟等待时间
-
-
-    } catch (error) {
-      console.error("退款异常", error)
-      alert("退款请求异常，请稍后重试")
+    // ⭐ 2️⃣ 接口返回
+    if (result.statusCode !== "00") {
+      setRefundMessage(`退款失败：${result.msg}`)
+      return
     }
+
+    // ⭐ 3️⃣ 退款成功
+    const isFullRefund = amount === selectedOrder.total
+
+    onRefund(selectedOrder.id, amount)
+
+    setRefundMessage("退款成功")
+    await fetchOrders()
+    // 稍微停留 1.5s 给用户确认
+    setTimeout(() => {
+      setShowRefundDialog(false)
+      setSelectedOrder(null)
+      setRefundAmount("")
+      setRefundMessage("")
+    }, 1500)
+
+  } catch (error) {
+    console.error("退款异常", error)
+    setRefundMessage("退款请求异常，请稍后重试")
+  } finally {
+    setRefundLoading(false)
+    
+  }
 }
+
 
   const refundOrder = async (referenceNumber: string) => {
     const res = await fetch(
@@ -369,22 +395,48 @@ interface OrdersViewProps {
                   step="0.01"
                 />
               </div>
+              {refundLoading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>退款正在发起，请稍等</span>
+                </div>
+              )}
+
+              {refundMessage && !refundLoading && (
+                <div className="text-sm text-green-600 bg-green-50 p-3 rounded-lg">
+                  {refundMessage}
+                </div>
+              )}
 
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setShowRefundDialog(false)}>
+                <Button
+                  variant="outline"
+                  className="flex-1 bg-transparent"
+                  onClick={() => setShowRefundDialog(false)}
+                  disabled={refundLoading}
+                >
                   取消
                 </Button>
+
                 <Button
                   variant="destructive"
                   className="flex-1"
                   onClick={() => handleRefund(selectedOrder.id)}
                   disabled={
+                    refundLoading ||
                     !refundAmount ||
                     Number.parseFloat(refundAmount) <= 0 ||
                     Number.parseFloat(refundAmount) > selectedOrder.total
                   }
                 >
-                  确认退款
+                  {refundLoading ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      处理中
+                    </span>
+                  ) : (
+                    "确认退款"
+                  )}
                 </Button>
               </div>
             </div>
