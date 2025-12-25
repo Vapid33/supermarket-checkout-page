@@ -281,13 +281,13 @@ interface OrdersViewProps {
                   {order.createdAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
                 </TableCell>
                 <TableCell className="font-semibold text-primary">${order.total.toFixed(2)}</TableCell>
-                <TableCell>{getStatusBadge(order.status)}</TableCell>
+                <TableCell>{(order.status)}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => setSelectedOrder(order)}>
                       <Eye className="w-4 h-4" />
                     </Button>
-                    {order.status === "完成" && (
+                    {order.status === "消费" && (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -332,7 +332,7 @@ interface OrdersViewProps {
                 </div>
                 <div>
                   <p className="text-muted-foreground">状态</p>
-                  {getStatusBadge(selectedOrder.status)}
+                  {(selectedOrder.status)}
                 </div>
               </div>
 
