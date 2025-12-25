@@ -123,7 +123,7 @@ const queryOrderStatus = async () => {
     const result = await res.json()
     console.log("2222222",result)
     // 假设完成状态是 "完成"
-    return result.data[0].orderState === "完成"
+    return result.data[0].orderState === "消费"
 }
   const handleConfirm = async () => {
     setIsProcessing(true)
