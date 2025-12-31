@@ -83,7 +83,7 @@ export function CashierView({ onNewOrder }: CashierViewProps) {
   }
   const transactionAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
   //const merchantId = Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
-  const merchantId ="123"
+  const merchantId ="898340149000005"
   const terminalId = '02228293';
   const referenceNumber = getMinuteTimestampString() + Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
  // const referenceNumber ="12345"
