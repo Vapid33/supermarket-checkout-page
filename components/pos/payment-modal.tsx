@@ -101,7 +101,7 @@ const saveOrder = async () => {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      merchantId: "123",
+      merchantId: "898340149000005",
       orderId: referenceNumber,
       amount: total,
       detail: JSON.stringify({
