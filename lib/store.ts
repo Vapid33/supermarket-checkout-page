@@ -17,7 +17,7 @@ export interface Order {
   id: string
   items: CartItem[]
   total: number
-  paymentMethod: "cash" | "qrcode" | "card"
+  paymentMethod:"qrcode" | "preAuth"
   status: string
   refundAmount?: number
   createdAt: Date

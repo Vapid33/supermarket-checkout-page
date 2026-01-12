@@ -1,6 +1,6 @@
 "use client"
 
-import { useState,useEffect } from "react"
+import { useState, useEffect } from "react"
 import type { Order } from "@/lib/store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,12 +11,13 @@ import { Search, Eye, Undo2, Calendar } from "lucide-react"
 import { Banknote, QrCode, CreditCard } from "lucide-react" // Import missing icons
 import { se } from "date-fns/locale"
 import { Loader2 } from "lucide-react"
+import { ref } from "process"
 interface OrdersViewProps {
   onRefund: (orderId: string, amount: number) => void
 }
 
- export function OrdersView({  onRefund }: OrdersViewProps) {
-//export function OrdersView(onRefund: (orderId: string, amount: number) => void) {
+export function OrdersView({ onRefund }: OrdersViewProps) {
+  //export function OrdersView(onRefund: (orderId: string, amount: number) => void) {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [showRefundDialog, setShowRefundDialog] = useState(false)
@@ -26,62 +27,108 @@ interface OrdersViewProps {
   const [orders, setOrders] = useState<Order[]>([])
   const [refundLoading, setRefundLoading] = useState(false)
   const [refundMessage, setRefundMessage] = useState("")
-   useEffect(() => {
+  const [showPreAuthDialog, setShowPreAuthDialog] = useState(false)
+  const [preAuthAction, setPreAuthAction] = useState<"complete" | "cancel" | null>(null)
+  const [preAuthAmount, setPreAuthAmount] = useState("")
+  const [preAuthLoading, setPreAuthLoading] = useState(false)
+  const [preAuthMessage, setPreAuthMessage] = useState("")
+  const [txRecords, setTxRecords] = useState<any[]>([])
+  const [txLoading, setTxLoading] = useState(false)
+  const ORDER_ACTIONS = {
+    消费: {
+      refund: true,
+    },
+    消费撤销: {
+      refund: true,
+    },
+    退货: {
+      refund: true,
+    },
+    预授权: {
+      preAuthComplete: true,
+      preAuthCancel: true,
+    },
+    预授权完成: {
+      refund: true,
+    },
+    预授权撤销: {},
+  } as const
 
-     fetchOrders()
-   }, [])
-   const fetchOrders = async () => {
-     try {
-       const res = await fetch(
-         "http://172.20.10.6:8088/merchant/queryOrders",
-       )
+  const can = (order: Order, action: keyof any) => {
+    return Boolean((ORDER_ACTIONS as any)[order.status]?.[action])
+  }
+  useEffect(() => {
 
-       if (!res.ok) {
-         throw new Error("Failed to fetch orders")
-       }
+    fetchOrders()
+  }, [])
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch(
+        "http://172.20.10.6:8088/merchant/queryOrders",
+        // "http://127.0.0.1:4523/m1/7468733-7203316-default/merchant/queryOrders"
+      )
 
-       const result = await res.json()
-       console.log(result)
-       
+      if (!res.ok) {
+        throw new Error("Failed to fetch orders")
+      }
 
-       // ⭐ 关键：接口数据 → Order[] 适配
-       const adaptedOrders: Order[] = result.data.map((item: any) => {
-         // ⭐ 1️⃣ 解析 transactionDetail（字符串 → 对象）
-         let parsedItems: any[] = []
+      const result = await res.json()
+      console.log(result)
 
-         try {
-           const detailObj = JSON.parse(item.raw.transactionDetail)
-           parsedItems = detailObj.items || []
-         } catch (e) {
-           console.error("transactionDetail 解析失败", item.raw.transactionDetail)
-         }
 
-         // ⭐ 2️⃣ 字段适配成前端需要的 items 结构
-         const adaptedItems = parsedItems.map((it: any, index: number) => ({
-           id: `${item.raw.referenceNumber}-${index}`,
-           name: it.name,
-           quantity: it.quantity,
-           price: it.unitPrice, // ⚠️ 注意字段名转换
-         }))
+      // ⭐ 关键：接口数据 → Order[] 适配
+      const adaptedOrders: Order[] = result.data.map((item: any) => {
+        // ⭐ 1️⃣ 解析 transactionDetail（字符串 → 对象）
+        let parsedItems: any[] = []
 
-         return {
-           id: item.raw.referenceNumber,
-           total: item.raw.transactionAmount,
-           status: item.orderState,
-           createdAt: new Date(item.raw.createdAt),
-           refundAmount: 0,
-           items: adaptedItems,
-         }
-       })
+        try {
+          const detailObj = JSON.parse(item.raw.transactionDetail)
+          parsedItems = detailObj.items || []
+        } catch (e) {
+          console.error("transactionDetail 解析失败", item.raw.transactionDetail)
+        }
 
-       setOrders(adaptedOrders)
-     } catch (error) {
-       console.error("获取订单失败:", error)
-     } finally {
+        // ⭐ 2️⃣ 字段适配成前端需要的 items 结构
+        const adaptedItems = parsedItems.map((it: any, index: number) => ({
+          id: `${item.raw.original_trace_number}-${index}`,
+          name: it.name,
+          quantity: it.quantity,
+          price: it.unitPrice, // ⚠️ 注意字段名转换
+        }))
 
-     }
-   }
+        return {
+          id: item.raw.referenceNumber,
+          total: item.raw.transactionAmount,
+          status: item.orderState,
+          createdAt: new Date(item.raw.createdAt),
+          refundAmount: 0,
+          items: adaptedItems,
+        }
+      })
 
+      setOrders(adaptedOrders)
+    } catch (error) {
+      console.error("获取订单失败:", error)
+    } finally {
+
+    }
+  }
+  const fetchTxRecords = async (referenceNumber: string) => {
+    try {
+      setTxLoading(true)
+      const res = await fetch(
+        "http://172.20.10.6:8088/merchant/queryOrderTransactions?orderId="+referenceNumber,
+      )
+
+      const result = await res.json()
+      setTxRecords(result.data || [])
+    } catch (e) {
+      console.error("交易记录获取失败", e)
+      setTxRecords([])
+    } finally {
+      setTxLoading(false)
+    }
+  }
   const filteredOrders = orders.filter((order) => {
     // 订单号筛选
     const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase())
@@ -126,16 +173,6 @@ interface OrdersViewProps {
     setEndDate("")
   }
 
-  const getPaymentIcon = (method: Order["paymentMethod"]) => {
-    switch (method) {
-      case "cash":
-        return <Banknote className="w-4 h-4" />
-      case "qrcode":
-        return <QrCode className="w-4 h-4" />
-      case "card":
-        return <CreditCard className="w-4 h-4" />
-    }
-  }
 
   const getStatusBadge = (status: Order["status"]) => {
     switch (status) {
@@ -149,46 +186,46 @@ interface OrdersViewProps {
   }
 
   const handleRefund = async (referenceNumber: string) => {
-  if (!selectedOrder || !refundAmount) return
+    if (!selectedOrder || !refundAmount) return
 
-  const amount = Number.parseFloat(refundAmount)
+    const amount = Number.parseFloat(refundAmount)
 
-  try {
-    // ⭐ 1️⃣ 进入退款中状态
-    setRefundLoading(true)
-    setRefundMessage("退款正在发起，请稍等")
+    try {
+      // ⭐ 1️⃣ 进入退款中状态
+      setRefundLoading(true)
+      setRefundMessage("退款正在发起，请稍等")
 
-    const result = await refundOrder(referenceNumber)
+      const result = await refundOrder(referenceNumber)
 
-    // ⭐ 2️⃣ 接口返回
-    if (result.statusCode !== "00") {
-      setRefundMessage(`退款失败：${result.msg}`)
-      return
+      // ⭐ 2️⃣ 接口返回
+      if (result.statusCode !== "00") {
+        setRefundMessage(`退款失败：${result.msg}`)
+        return
+      }
+
+      // ⭐ 3️⃣ 退款成功
+      const isFullRefund = amount === selectedOrder.total
+
+      onRefund(selectedOrder.id, amount)
+
+      setRefundMessage("退款成功")
+      await fetchOrders()
+      // 稍微停留 1.5s 给用户确认
+      setTimeout(() => {
+        setShowRefundDialog(false)
+        setSelectedOrder(null)
+        setRefundAmount("")
+        setRefundMessage("")
+      }, 1500)
+
+    } catch (error) {
+      console.error("退款异常", error)
+      setRefundMessage("退款请求异常，请稍后重试")
+    } finally {
+      setRefundLoading(false)
+
     }
-
-    // ⭐ 3️⃣ 退款成功
-    const isFullRefund = amount === selectedOrder.total
-
-    onRefund(selectedOrder.id, amount)
-
-    setRefundMessage("退款成功")
-    await fetchOrders()
-    // 稍微停留 1.5s 给用户确认
-    setTimeout(() => {
-      setShowRefundDialog(false)
-      setSelectedOrder(null)
-      setRefundAmount("")
-      setRefundMessage("")
-    }, 1500)
-
-  } catch (error) {
-    console.error("退款异常", error)
-    setRefundMessage("退款请求异常，请稍后重试")
-  } finally {
-    setRefundLoading(false)
-    
   }
-}
 
 
   const refundOrder = async (referenceNumber: string) => {
@@ -201,12 +238,60 @@ interface OrdersViewProps {
         },
         body: JSON.stringify({
           referenceNumber,
+          transactionAmount: refundAmount,
         }),
       }
     )
 
     const json = await res.json()
     return json
+  }
+  const handlePreAuthSubmit = async () => {
+    if (!selectedOrder || !preAuthAction) return
+
+    try {
+      setPreAuthLoading(true)
+      setPreAuthMessage("")
+      let url = "";
+      if (preAuthAction === "complete") {
+        url = "http://172.20.10.6:8088/merchant/preAuth/complete"
+      } else if (preAuthAction === "cancel") {
+        url = "http://172.20.10.6:8088/merchant/preAuth/cancel"
+      }
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          merchantId: "898340149000005",
+          referenceNumber: selectedOrder.id,
+          amount: Number(preAuthAmount),
+        }),
+      })
+
+      const result = await res.json()
+
+      if (result.statusCode !== "00") {
+        throw new Error(result.msg || "操作失败")
+      }
+
+      setPreAuthMessage("操作成功")
+      await fetchOrders()
+
+      setTimeout(() => {
+        setShowPreAuthDialog(false)
+        setSelectedOrder(null)
+        setPreAuthAction(null)
+        setPreAuthAmount("")
+        setPreAuthMessage("")
+      }, 1500)
+
+    } catch (e) {
+      setPreAuthMessage("操作失败，请重试")
+    } finally {
+      setPreAuthLoading(false)
+    }
   }
 
 
@@ -284,10 +369,13 @@ interface OrdersViewProps {
                 <TableCell>{(order.status)}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => setSelectedOrder(order)}>
+                    <Button variant="ghost" size="icon" onClick={() => {
+                      setSelectedOrder(order)
+                      fetchTxRecords(order.id)
+                    }}>
                       <Eye className="w-4 h-4" />
                     </Button>
-                    {order.status === "消费" && (
+                    {can(order, "refund") && (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -301,6 +389,37 @@ interface OrdersViewProps {
                         <Undo2 className="w-4 h-4" />
                       </Button>
                     )}
+                    {/* 预授权完成 */}
+                    {can(order, "preAuthComplete") && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedOrder(order)
+                          setPreAuthAction("complete")
+                          setPreAuthAmount(order.total.toString())
+                          setShowPreAuthDialog(true)
+                        }}
+                      >
+                        预授权完成
+                      </Button>
+                    )}
+
+                    {/* 预授权撤销 */}
+                    {can(order, "preAuthCancel") && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedOrder(order)
+                          setPreAuthAction("cancel")
+                          setPreAuthAmount(order.total.toString())
+                          setShowPreAuthDialog(true)
+                        }}
+                      >
+                        预授权撤销
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -310,7 +429,7 @@ interface OrdersViewProps {
       </div>
 
       {/* 订单详情弹窗 */}
-      <Dialog open={!!selectedOrder && !showRefundDialog} onOpenChange={() => setSelectedOrder(null)}>
+      <Dialog open={!!selectedOrder && !showRefundDialog && !showPreAuthDialog} onOpenChange={() => setSelectedOrder(null)}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>订单详情</DialogTitle>
@@ -361,6 +480,31 @@ interface OrdersViewProps {
                   <span className="font-semibold">${selectedOrder.refundAmount.toFixed(2)}</span>
                 </div>
               )}
+              <div className="border-t border-border pt-4">
+                <h4 className="font-medium mb-2">交易记录</h4>
+
+                {txLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    加载中…
+                  </div>
+                ) : txRecords.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">暂无交易记录</p>
+                ) : (
+                  <div className="space-y-2 text-sm">
+                    {txRecords.map((tx, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between bg-muted/50 p-2 rounded"
+                      >
+                        <span>{new Date(tx.time).toLocaleString("zh-CN")}</span>
+                        <span>{tx.orderState}</span>
+                        <span className="font-medium">${tx.raw.transactionAmount.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
@@ -436,6 +580,88 @@ interface OrdersViewProps {
                     </span>
                   ) : (
                     "确认退款"
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={showPreAuthDialog} onOpenChange={setShowPreAuthDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {preAuthAction === "complete" ? "预授权完成" : "预授权撤销"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="space-y-4">
+              {/* 订单信息 */}
+              <div className="bg-muted/50 p-4 rounded-lg space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">订单号</span>
+                  <span className="font-mono">{selectedOrder.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">订单金额</span>
+                  <span className="font-semibold">
+                    ${selectedOrder.total.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* 金额修改 */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">操作金额</label>
+                <Input
+                  type="number"
+                  value={preAuthAmount}
+                  step="0.01"
+                  max={selectedOrder.total}
+                  onChange={(e) => setPreAuthAmount(e.target.value)}
+                />
+              </div>
+
+              {/* loading */}
+              {preAuthLoading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>处理中，请稍等…</span>
+                </div>
+              )}
+
+              {/* 成功提示 */}
+              {preAuthMessage && !preAuthLoading && (
+                <div className="text-sm text-green-600 bg-green-50 p-3 rounded-lg">
+                  {preAuthMessage}
+                </div>
+              )}
+
+              {/* 操作按钮 */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  disabled={preAuthLoading}
+                  onClick={() => setShowPreAuthDialog(false)}
+                >
+                  取消
+                </Button>
+
+                <Button
+                  className="flex-1"
+                  disabled={
+                    preAuthLoading ||
+                    !preAuthAmount ||
+                    Number(preAuthAmount) <= 0
+                  }
+                  onClick={() => handlePreAuthSubmit()}
+                >
+                  {preAuthLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    preAuthAction === "complete" ? "确认完成" : "确认撤销"
                   )}
                 </Button>
               </div>

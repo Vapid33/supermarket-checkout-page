@@ -25,6 +25,7 @@ export default function POSPage() {
 
         const res = await fetch(
           "http://172.20.10.6:8088/merchant/queryOrders",
+          //"http://127.0.0.1:4523/m1/7468733-7203316-default/merchant/queryOrders",
         )
 
         if (!res.ok) {
@@ -36,7 +37,7 @@ export default function POSPage() {
 
         // ⭐ 关键：接口数据 → Order[] 适配
         const adaptedOrders: Order[] = result.data.map((item: any) => ({
-          id: item.raw.referenceNumber,
+          id: item.raw.original_trace_number,
           total: item.raw.transactionAmount,
           status: item.orderState,
           createdAt: new Date(item.raw.originalTransactionTime),

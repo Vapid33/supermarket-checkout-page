@@ -14,7 +14,7 @@ interface CashierViewProps {
 
 export function CashierView({ onNewOrder }: CashierViewProps) {
   const [cart, setCart] = useState<CartItem[]>([])
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "qrcode" | "card">("qrcode")
+  const [paymentMethod, setPaymentMethod] = useState<"qrcode" | "preAuth">("qrcode")
   const [showPayment, setShowPayment] = useState(false)
    const { toast } = useToast()
 
@@ -64,7 +64,7 @@ export function CashierView({ onNewOrder }: CashierViewProps) {
     setCart([])
   }, [])
 
-  const handleCheckout = useCallback((method: "cash" | "qrcode" | "card") => {
+  const handleCheckout = useCallback((method: "qrcode" | "preAuth") => {
     setPaymentMethod(method)
     setShowPayment(true)
   }, [])
@@ -87,7 +87,7 @@ export function CashierView({ onNewOrder }: CashierViewProps) {
   const terminalId = '02228293';
   const referenceNumber = getMinuteTimestampString() + Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
  // const referenceNumber ="12345"
-  const transactionType = "";
+  const transactionType = paymentMethod === "preAuth" ? "预授权" : "消费";
   const payload = {
     merchantId,
     terminalId,

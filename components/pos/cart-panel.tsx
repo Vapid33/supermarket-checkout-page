@@ -10,7 +10,7 @@ interface CartPanelProps {
   onUpdateQuantity: (id: string, quantity: number) => void
   onRemoveItem: (id: string) => void
   onClearCart: () => void
-  onCheckout: (method: "cash" | "qrcode" | "card") => void
+  onCheckout: (method: "qrcode" | "preAuth") => void
 }
 
 export function CartPanel({ items, onUpdateQuantity, onRemoveItem, onClearCart, onCheckout }: CartPanelProps) {
@@ -111,16 +111,7 @@ export function CartPanel({ items, onUpdateQuantity, onRemoveItem, onClearCart, 
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
-          <Button
-            onClick={() => onCheckout("cash")}
-            disabled={items.length === 0}
-            variant="outline"
-            className="flex flex-col gap-1 h-auto py-3"
-          >
-            <Banknote className="w-5 h-5" />
-            <span className="text-xs">现金</span>
-          </Button>
+        <div className="grid grid-cols-2 gap-2">
           <Button
             onClick={() => onCheckout("qrcode")}
             disabled={items.length === 0}
@@ -130,13 +121,13 @@ export function CartPanel({ items, onUpdateQuantity, onRemoveItem, onClearCart, 
             <span className="text-xs">扫码支付</span>
           </Button>
           <Button
-            onClick={() => onCheckout("card")}
+            onClick={() => onCheckout("preAuth")}
             disabled={items.length === 0}
             variant="outline"
             className="flex flex-col gap-1 h-auto py-3"
           >
-            <CreditCard className="w-5 h-5" />
-            <span className="text-xs">刷卡</span>
+            <QrCode className="w-5 h-5" />
+            <span className="text-xs">预授权</span>
           </Button>
         </div>
       </div>

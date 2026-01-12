@@ -10,11 +10,12 @@ import { CheckCircle2, QrCode, Banknote, CreditCard, Loader2 } from "lucide-reac
 import { cn } from "@/lib/utils"
 import { QRCodeCanvas } from "qrcode.react"
 import { XCircle } from "lucide-react"
+import { el } from "date-fns/locale"
 
 interface PaymentModalProps {
   open: boolean
   onClose: () => void
-  method: "cash" | "qrcode" | "card"
+  method: "qrcode" | "preAuth"
   total: number
   items: CartItem[]
   onConfirm: () => void
@@ -39,7 +40,7 @@ export function PaymentModal({ open, onClose, method, total, items, onConfirm ,q
   }, [open])
 
   useEffect(() => {
-  if (!open || method !== "qrcode") return
+  if (!open ) return
 
   let pollingTimer: NodeJS.Timeout
   let timeoutTimer: NodeJS.Timeout
@@ -111,6 +112,7 @@ const saveOrder = async () => {
           unitPrice: item.price,
           totalPrice: item.price * item.quantity,
         })),
+        amount: total
       }),
     }),
   })
@@ -123,24 +125,16 @@ const queryOrderStatus = async () => {
     const result = await res.json()
     console.log("2222222",result)
     // 假设完成状态是 "完成"
-    return result.data[0].orderState === "消费"
+    if(method==="preAuth"){
+      return result.data[0].orderState === "预授权"
+    }else{
+      return result.data[0].orderState === "消费"
+    }
 }
-  const handleConfirm = async () => {
-    setIsProcessing(true)
-    // 模拟支付处理
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setIsProcessing(false)
-    setIsSuccess(true)
-    // 显示成功后关闭
-    setTimeout(() => {
-      onConfirm()
-    }, 1500)
-  }
 
   const methodConfig = {
-    cash: { icon: Banknote, label: "现金支付", color: "text-green-600" },
     qrcode: { icon: QrCode, label: "扫码支付", color: "text-primary" },
-    card: { icon: CreditCard, label: "刷卡支付", color: "text-blue-600" },
+    preAuth: { icon: QrCode, label: "预授权", color: "text-blue-600" },
   }
 
   const config = methodConfig[method]
@@ -157,9 +151,6 @@ const queryOrderStatus = async () => {
             <h3 className="text-xl font-semibold text-foreground mb-2">支付成功</h3>
             <p className="text-muted-foreground">交易已完成</p>
             <p className="text-2xl font-bold text-primary mt-4">${total.toFixed(2)}</p>
-            {method === "cash" && change > 0 && (
-              <p className="text-muted-foreground mt-2">找零: ${change.toFixed(2)}</p>
-            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -210,36 +201,6 @@ if (isFailed) {
           </div>
 
           {/* 支付方式特定内容 */}
-          {method === "cash" && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>收款金额</Label>
-                <Input
-                  type="number"
-                  placeholder="输入收到的现金金额"
-                  value={cashReceived}
-                  onChange={(e) => setCashReceived(e.target.value)}
-                  className="text-lg"
-                />
-              </div>
-              {cashReceived && Number.parseFloat(cashReceived) >= total && (
-                <div className="bg-green-50 text-green-700 p-3 rounded-lg">
-                  <div className="flex justify-between">
-                    <span>找零</span>
-                    <span className="font-semibold">${change.toFixed(2)}</span>
-                  </div>
-                </div>
-              )}
-              {/* 快捷金额按钮 */}
-              <div className="grid grid-cols-4 gap-2">
-                {[10, 20, 50, 100].map((amount) => (
-                  <Button key={amount} variant="outline" onClick={() => setCashReceived(String(amount))}>
-                    ${amount}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {method === "qrcode" && (
             <div className="flex flex-col items-center py-4">
@@ -258,29 +219,22 @@ if (isFailed) {
             </div>
           )}
 
-          {method === "card" && (
-            <div className="flex flex-col items-center py-8">
-              <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <CreditCard className="w-12 h-12 text-blue-600" />
+          {method === "preAuth" && (
+            <div className="flex flex-col items-center py-4">
+              <div className="bg-white p-4 rounded-2xl shadow-sm border">
+                 <QRCodeCanvas value={qrValue} size={208} />
               </div>
-              <p className="text-muted-foreground">请将银行卡靠近读卡器</p>
+              <div className="mt-4 text-center">
+                <p className="font-medium text-foreground">请顾客扫描二维码进行预授权</p>
+              </div>
+              <div className="mt-4 w-full bg-muted/50 rounded-lg p-3">
+                <div className="flex items-center justify-center gap-2 text-amber-600">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">等待顾客扫码支付...</span>
+                </div>
+              </div>
             </div>
           )}
-
-          {/* <Button
-            onClick={handleConfirm}
-            className="w-full"
-            disabled={isProcessing || (method === "cash" && (!cashReceived || Number.parseFloat(cashReceived) < total))}
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                处理中...
-              </>
-            ) : (
-              `确认收款 $${total.toFixed(2)}`
-            )}
-          </Button> */}
         </div>
       </DialogContent>
     </Dialog>
