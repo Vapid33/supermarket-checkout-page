@@ -399,7 +399,7 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
                         onClick={() => {
                           setSelectedOrder(order)
                           setPreAuthAction("complete")
-                          setPreAuthAmount(order.total.toString())
+                          setPreAuthAmount(order.total.toFixed(2))
                           setShowPreAuthDialog(true)
                         }}
                       >
@@ -415,7 +415,7 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
                         onClick={() => {
                           setSelectedOrder(order)
                           setPreAuthAction("cancel")
-                          setPreAuthAmount(order.total.toString())
+                          setPreAuthAmount(order.total.toFixed(2))
                           setShowPreAuthDialog(true)
                         }}
                       >
@@ -620,7 +620,7 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
                   type="number"
                   value={preAuthAmount}
                   step="0.01"
-                  max={selectedOrder.total}
+                  max={selectedOrder.total.toFixed(2)}
                   onChange={(e) => setPreAuthAmount(e.target.value)}
                 />
               </div>
