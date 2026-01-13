@@ -267,7 +267,7 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
         },
         body: JSON.stringify({
           merchantId: "898340149000005",
-          referenceNumber: selectedOrder.id,
+          orderId: selectedOrder.id,
           amount: Number(preAuthAmount),
         }),
       })
