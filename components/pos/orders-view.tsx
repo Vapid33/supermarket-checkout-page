@@ -80,32 +80,34 @@ export function OrdersView({ onRefund }: OrdersViewProps) {
       const adaptedOrders: Order[] = result.data.map((item: any) => {
         // ⭐ 1️⃣ 解析 transactionDetail（字符串 → 对象）
         let parsedItems: any[] = []
-
+        let amountFromDetail = 0;
+console.log("Raw Order Data:", item); // 输出每一条订单数据
         try {
+          console.log("transactionDetail:", item.raw.transactionDetail)
           const detailObj = JSON.parse(item.raw.transactionDetail)
           parsedItems = detailObj.items || []
+          amountFromDetail = detailObj.amount || 0;
         } catch (e) {
           console.error("transactionDetail 解析失败", item.raw.transactionDetail)
         }
 
         // ⭐ 2️⃣ 字段适配成前端需要的 items 结构
         const adaptedItems = parsedItems.map((it: any, index: number) => ({
-          id: `${item.raw.original_trace_number}-${index}`,
+          id: `${item.raw.originalTraceNumber}-${index}`,
           name: it.name,
           quantity: it.quantity,
           price: it.unitPrice, // ⚠️ 注意字段名转换
         }))
 
         return {
-          id: item.raw.referenceNumber,
-          total: item.raw.transactionAmount,
+          id: item.raw.originalTraceNumber,
+          total: amountFromDetail,
           status: item.orderState,
           createdAt: new Date(item.raw.createdAt),
-          refundAmount: 0,
           items: adaptedItems,
         }
       })
-
+      console.log("Adapted Orders:", adaptedOrders);
       setOrders(adaptedOrders)
     } catch (error) {
       console.error("获取订单失败:", error)
@@ -131,7 +133,7 @@ export function OrdersView({ onRefund }: OrdersViewProps) {
   }
   const filteredOrders = orders.filter((order) => {
     // 订单号筛选
-    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = order.id?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false;
 
     // 时间范围筛选
     let matchesDateRange = true
@@ -474,12 +476,12 @@ export function OrdersView({ onRefund }: OrdersViewProps) {
                 <span className="text-xl font-bold text-primary">${selectedOrder.total.toFixed(2)}</span>
               </div>
 
-              {selectedOrder.refundAmount && (
+              {/* {selectedOrder.refundAmount && (
                 <div className="bg-red-50 text-red-700 p-3 rounded-lg flex justify-between">
                   <span>已退款金额</span>
                   <span className="font-semibold">${selectedOrder.refundAmount.toFixed(2)}</span>
                 </div>
-              )}
+              )} */}
               <div className="border-t border-border pt-4">
                 <h4 className="font-medium mb-2">交易记录</h4>
 
@@ -497,7 +499,7 @@ export function OrdersView({ onRefund }: OrdersViewProps) {
                         key={index}
                         className="flex justify-between bg-muted/50 p-2 rounded"
                       >
-                        <span>{new Date(tx.time).toLocaleString("zh-CN")}</span>
+                        <span>{new Date(tx.raw.createdAt).toLocaleString("zh-CN")}</span>
                         <span>{tx.orderState}</span>
                         <span className="font-medium">${tx.raw.transactionAmount.toFixed(2)}</span>
                       </div>

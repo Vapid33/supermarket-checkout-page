@@ -36,14 +36,35 @@ export default function POSPage() {
         console.log(result)
 
         // ⭐ 关键：接口数据 → Order[] 适配
-        const adaptedOrders: Order[] = result.data.map((item: any) => ({
-          id: item.raw.original_trace_number,
-          total: item.raw.transactionAmount,
-          status: item.orderState,
-          createdAt: new Date(item.raw.originalTransactionTime),
-          refundAmount: 0,
-          items: [],
-        }))
+        // const adaptedOrders: Order[] = result.data.map((item: any) => ({
+        //   id: item.raw.originalTraceNumber,
+        //   total: item.raw.transactionAmount,
+        //   status: item.orderState,
+        //   createdAt: new Date(item.raw.originalTransactionTime),
+        //   // refundAmount: 0,
+        //   items: [],
+        // }))
+
+        const adaptedOrders: Order[] = result.data.map((item: any) => {
+          // ⭐ 1️⃣ 解析 transactionDetail（字符串 → 对象）
+          let parsedDetail: any = {}
+          try {
+            parsedDetail = JSON.parse(item.raw.transactionDetail);
+          } catch (e) {
+            console.error("transactionDetail 解析失败", item.raw.transactionDetail);
+          }
+
+          // 读取 transactionDetail 中的 amount
+          const amountFromDetail = parsedDetail.amount || 0;
+
+          return {
+            id: item.raw.originalTraceNumber,
+            total: amountFromDetail, // 使用 transactionDetail 中的 amount
+            status: item.orderState,
+            createdAt: new Date(item.raw.originalTransactionTime),
+            items: [],
+          };
+        });
 
         setOrders(adaptedOrders)
       } catch (error) {
@@ -68,7 +89,7 @@ export default function POSPage() {
           return {
             ...order,
             status: isFullRefund ? "refunded" : "partial_refund",
-            refundAmount: amount,
+            //refundAmount: amount,
           }
         }
         return order
