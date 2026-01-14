@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { type Order, generateMockOrders } from "@/lib/store"
+import { type Order,  } from "@/lib/store"
 import { Sidebar } from "@/components/pos/sidebar"
 import { CashierView } from "@/components/pos/cashier-view"
 import { OrdersView } from "@/components/pos/orders-view"

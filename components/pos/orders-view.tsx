@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Eye, Undo2, Calendar } from "lucide-react"
 import { Banknote, QrCode, CreditCard } from "lucide-react" // Import missing icons
 import { se } from "date-fns/locale"
-import { Loader2 } from "lucide-react"
+import { Loader2 ,ExternalLink} from "lucide-react"
 import { ref } from "process"
 interface OrdersViewProps {
   onRefund: (orderId: string, amount: number) => void
@@ -173,6 +173,12 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
   const clearDateFilter = () => {
     setStartDate("")
     setEndDate("")
+  }
+
+    const shortenHash = (hash: string, start = 4, end = 4) => {
+    if (!hash) return "--"
+    if (hash.length <= start + end) return hash
+    return `${hash.slice(0, start)}...${hash.slice(-end)}`
   }
 
 
@@ -379,16 +385,16 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
                     </Button>
                     {can(order, "refund") && (
                       <Button
-                        variant="ghost"
-                        size="icon"
+                        variant="outline"
+                        size="sm"
                         onClick={() => {
                           setSelectedOrder(order)
                           setRefundAmount(order.total.toString())
                           setShowRefundDialog(true)
                         }}
-                        className="text-destructive"
+                       
                       >
-                        <Undo2 className="w-4 h-4" />
+                        消费撤销/退货
                       </Button>
                     )}
                     {/* 预授权完成 */}
@@ -501,6 +507,17 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
                       >
                         <span>{new Date(tx.raw.createdAt).toLocaleString("zh-CN")}</span>
                         <span>{tx.orderState}</span>
+                        <a
+                          href={`https://sepolia.etherscan.io/tx/${tx.raw.chainTransactionHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                        >
+                          <span className="font-mono text-xs">
+                            {shortenHash(tx.raw.chainTransactionHash)}
+                          </span>
+                          <ExternalLink className="size-3" />
+                        </a>
                         <span className="font-medium">${tx.raw.transactionAmount.toFixed(2)}</span>
                       </div>
                     ))}
