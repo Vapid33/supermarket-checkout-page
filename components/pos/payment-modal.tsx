@@ -148,8 +148,7 @@ const queryOrderStatus = async () => {
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
               <CheckCircle2 className="w-12 h-12 text-green-600" />
             </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">支付成功</h3>
-            <p className="text-muted-foreground">交易已完成</p>
+            <h3 className="text-xl font-semibold text-foreground mb-2">{method === "preAuth" ? "预授权成功" : "支付成功"}</h3>
             <p className="text-2xl font-bold text-primary mt-4">${total.toFixed(2)}</p>
           </div>
         </DialogContent>
@@ -164,9 +163,9 @@ if (isFailed) {
           <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-4">
             <XCircle className="w-12 h-12 text-red-600" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">支付失败</h3>
+          <h3 className="text-xl font-semibold mb-2">{method === "preAuth" ? "预授权失败" : "支付失败"}</h3>
           <p className="text-muted-foreground">
-            超过 30 秒未完成支付
+            超过 30 秒未完成操作
           </p>
 
           <Button className="mt-6 w-full" onClick={onClose}>
