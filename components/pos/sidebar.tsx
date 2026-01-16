@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { ShoppingCart, Receipt, BarChart3, Settings, Store } from "lucide-react"
+import { ShoppingCart, Receipt, BarChart3, Settings, Store,Hotel  } from "lucide-react"
 
 interface SidebarProps {
   activeTab: string
@@ -10,6 +10,7 @@ interface SidebarProps {
 
 const menuItems = [
   { id: "cashier", label: "收银台", icon: ShoppingCart },
+  { id: "checkRoom", label: "酒店订房", icon: Hotel  },
   { id: "orders", label: "订单记录", icon: Receipt },
   { id: "stats", label: "营业统计", icon: BarChart3 },
   { id: "settings", label: "设置", icon: Settings },

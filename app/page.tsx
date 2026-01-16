@@ -8,6 +8,7 @@ import { OrdersView } from "@/components/pos/orders-view"
 import { StatsView } from "@/components/pos/stats-view"
 import { SettingsView } from "@/components/pos/settings-view"
 import { Toaster } from "@/components/ui/toaster"
+import { HotelView } from "@/components/pos/hotel-view"
 
 export default function POSPage() {
   const [activeTab, setActiveTab] = useState("cashier")
@@ -104,6 +105,7 @@ export default function POSPage() {
       <main className="flex-1 flex flex-col overflow-hidden">
         {activeTab === "cashier" && <CashierView onNewOrder={handleNewOrder} />}
         {/* {activeTab === "orders" && <OrdersView orders={orders} onRefund={handleRefund} />} */}
+        {activeTab === "checkRoom" && <HotelView onNewOrder={handleNewOrder} />}
          {activeTab === "orders" && <OrdersView  onRefund={handleRefund}/>}
         {activeTab === "stats" && <StatsView orders={orders} />}
         {activeTab === "settings" && <SettingsView />}

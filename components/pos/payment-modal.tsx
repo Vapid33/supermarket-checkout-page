@@ -190,8 +190,8 @@ if (isFailed) {
           {/* 订单摘要 */}
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">商品数量</span>
-              <span>{items.reduce((sum, item) => sum + item.quantity, 0)} 件</span>
+              {/* <span className="text-muted-foreground">商品数量</span> */}
+              {/* <span>{items.reduce((sum, item) => sum + item.quantity, 0)} 件</span> */}
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">应付金额</span>

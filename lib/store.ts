@@ -136,4 +136,44 @@ export const products: Product[] = [
   },
 ];
 
+export const rooms: Product[] = [
+  {
+    id: "R1",
+    barcode: "ROOM-DELUXE-KING",
+    name: "豪华大床房",
+    price: 128.0,
+    category: "酒店",
+    stock: 20, // 可预订房间数
+    image: "hhd.jpg",
+  },
+  {
+    id: "R2",
+    barcode: "ROOM-DELUXE-TWIN",
+    name: "豪华双床房",
+    price: 138.0,
+    category: "酒店",
+    stock: 18,
+    image: "hhs.jpg",
+  },
+  {
+    id: "R3",
+    barcode: "ROOM-EXECUTIVE-KING",
+    name: "行政大床房",
+    price: 188.0,
+    category: "酒店",
+    stock: 12,
+    image: "xzdc.jpg",
+  },
+  {
+    id: "R4",
+    barcode: "ROOM-EXECUTIVE-SUITE",
+    name: "行政套房",
+    price: 268.0,
+    category: "酒店",
+    stock: 6,
+    image: "xzt.jpg",
+  },
+
+];
+
 
