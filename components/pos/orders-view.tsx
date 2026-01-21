@@ -28,7 +28,7 @@ export function OrdersView({ onRefund }: OrdersViewProps) {
   const [refundLoading, setRefundLoading] = useState(false)
   const [refundMessage, setRefundMessage] = useState("")
   const [showPreAuthDialog, setShowPreAuthDialog] = useState(false)
-  const [preAuthAction, setPreAuthAction] = useState<"complete" | "cancel" | null>(null)
+  const [preAuthAction, setPreAuthAction] = useState<"complete" | "cancel" | "completeCancel" | null>(null)
   const [preAuthAmount, setPreAuthAmount] = useState("")
   const [preAuthLoading, setPreAuthLoading] = useState(false)
   const [preAuthMessage, setPreAuthMessage] = useState("")
@@ -49,7 +49,7 @@ export function OrdersView({ onRefund }: OrdersViewProps) {
       preAuthCancel: true,
     },
     预授权完成: {
-      refund: true,
+      preAuthCompleteCancel: true,
     },
     预授权撤销: {},
   } as const
@@ -254,53 +254,70 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
     const json = await res.json()
     return json
   }
-  const handlePreAuthSubmit = async () => {
-    if (!selectedOrder || !preAuthAction) return
+const handlePreAuthSubmit = async () => {
+  if (!selectedOrder || !preAuthAction) return
 
-    try {
-      setPreAuthLoading(true)
-      setPreAuthMessage("")
-      let url = "";
-      if (preAuthAction === "complete") {
-        url = "http://172.20.10.6:8088/merchant/preAuth/complete"
-      } else if (preAuthAction === "cancel") {
-        url = "http://172.20.10.6:8088/merchant/preAuth/cancel"
+  try {
+    setPreAuthLoading(true)
+    setPreAuthMessage("")
+
+    let url = ""
+    let body: any = {}
+
+    if (preAuthAction === "complete") {
+      url = "http://172.20.10.6:8088/merchant/preAuth/complete"
+      body = {
+        merchantId: "898340149000005",
+        orderId: selectedOrder.id,
+        amount: Number(preAuthAmount),
       }
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          merchantId: "898340149000005",
-          orderId: selectedOrder.id,
-          amount: Number(preAuthAmount),
-        }),
-      })
-
-      const result = await res.json()
-
-      if (result.statusCode !== "00") {
-        throw new Error(result.msg || "操作失败")
-      }
-
-      setPreAuthMessage("操作成功")
-      await fetchOrders()
-
-      setTimeout(() => {
-        setShowPreAuthDialog(false)
-        setSelectedOrder(null)
-        setPreAuthAction(null)
-        setPreAuthAmount("")
-        setPreAuthMessage("")
-      }, 1500)
-
-    } catch (e) {
-      setPreAuthMessage("操作失败，请重试")
-    } finally {
-      setPreAuthLoading(false)
     }
+
+    if (preAuthAction === "cancel") {
+      url = "http://172.20.10.6:8088/merchant/preAuth/cancel"
+      body = {
+        merchantId: "898340149000005",
+        orderId: selectedOrder.id,
+        amount: Number(preAuthAmount),
+      }
+    }
+
+    // ⭐⭐ 新增：预授权完成撤销
+    if (preAuthAction === "completeCancel") {
+      url = "http://172.20.10.6:8088/merchant/preAuthCancel"
+      body = {
+        referenceNumber: selectedOrder.id,
+      }
+    }
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+
+    const result = await res.json()
+    if (result.statusCode !== "00") {
+      throw new Error(result.msg || "操作失败")
+    }
+
+    setPreAuthMessage("操作成功")
+    await fetchOrders()
+
+    setTimeout(() => {
+      setShowPreAuthDialog(false)
+      setSelectedOrder(null)
+      setPreAuthAction(null)
+      setPreAuthAmount("")
+      setPreAuthMessage("")
+    }, 1500)
+  } catch (e) {
+    setPreAuthMessage("操作失败，请重试")
+  } finally {
+    setPreAuthLoading(false)
   }
+}
+
 
 
   return (
@@ -412,6 +429,19 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
                         预授权完成
                       </Button>
                     )}
+                      {can(order, "preAuthCompleteCancel") && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedOrder(order)
+                            setPreAuthAction("completeCancel")
+                            setShowPreAuthDialog(true)
+                          }}
+                        >
+                          预授权完成撤销
+                        </Button>
+                      )}
 
                     {/* 预授权撤销 */}
                     {can(order, "preAuthCancel") && (
@@ -610,7 +640,9 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {preAuthAction === "complete" ? "预授权完成" : "预授权撤销"}
+              {preAuthAction === "complete" && "预授权完成"}
+              {preAuthAction === "cancel" && "预授权撤销"}
+              {preAuthAction === "completeCancel" && "预授权完成撤销"}
             </DialogTitle>
           </DialogHeader>
 
@@ -631,16 +663,18 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
               </div>
 
               {/* 金额修改 */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">操作金额</label>
-                <Input
-                  type="number"
-                  value={preAuthAmount}
-                  step="0.01"
-                  max={selectedOrder.total.toFixed(2)}
-                  onChange={(e) => setPreAuthAmount(e.target.value)}
-                />
-              </div>
+              {preAuthAction !== "completeCancel" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">操作金额</label>
+                  <Input
+                    type="number"
+                    value={preAuthAmount}
+                    step="0.01"
+                    max={selectedOrder.total.toFixed(2)}
+                    onChange={(e) => setPreAuthAmount(e.target.value)}
+                  />
+                </div>
+              )}
 
               {/* loading */}
               {preAuthLoading && (
