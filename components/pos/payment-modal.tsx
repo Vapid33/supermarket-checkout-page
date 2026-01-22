@@ -21,15 +21,17 @@ interface PaymentModalProps {
   onConfirm: () => void
   qrValue :string
   referenceNumber:string
+  isHotel?: boolean
 }
 
-export function PaymentModal({ open, onClose, method, total, items, onConfirm ,qrValue,referenceNumber}: PaymentModalProps) {
+export function PaymentModal({ open, onClose, method, total, items, onConfirm ,qrValue,referenceNumber,isHotel=false}: PaymentModalProps) {
   const [cashReceived, setCashReceived] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
   const change = cashReceived ? Number.parseFloat(cashReceived) - total : 0
   const [isFailed, setIsFailed] = useState(false)
+  const merchantId = isHotel?"898340149000006":"898340149000005"
   useEffect(() => {
     if (!open) {
       setCashReceived("")
@@ -102,7 +104,7 @@ const saveOrder = async () => {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      merchantId: "898340149000005",
+      merchantId: merchantId,
       orderId: referenceNumber,
       amount: total,
       detail: JSON.stringify({

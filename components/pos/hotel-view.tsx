@@ -89,6 +89,7 @@ export function HotelView({ onNewOrder }: HotelBookingViewProps) {
   }, [cart, totalAmount, paymentMethod, onNewOrder, toast])
 
   const qrValue = JSON.stringify({
+    merchantId: "898340149000006",
     referenceNumber,
     amount: totalAmount,
     transactionType: paymentMethod === "preAuth" ? "预授权" : "消费",
@@ -168,6 +169,7 @@ export function HotelView({ onNewOrder }: HotelBookingViewProps) {
         onConfirm={handlePaymentConfirm}
         qrValue={qrValue}
         referenceNumber={referenceNumber}
+        isHotel={true}
       />
     </div>
   )
