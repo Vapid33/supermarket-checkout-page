@@ -65,7 +65,7 @@ export function OrdersView({ onRefund }: OrdersViewProps) {
   const fetchOrders = async () => {
     try {
       const res = await fetch(
-        "http://172.20.10.6:8088/merchant/queryOrders",
+        "http://172.20.10.6:8088/merchant/v2/queryOrders",
         // "http://127.0.0.1:4523/m1/7468733-7203316-default/merchant/queryOrders"
       )
 
@@ -78,35 +78,33 @@ export function OrdersView({ onRefund }: OrdersViewProps) {
 
 
       // ⭐ 关键：接口数据 → Order[] 适配
-      const adaptedOrders: Order[] = result.data.map((item: any) => {
+      const adaptedOrders: Order[] = result.data.content.map((item: any) => {
         // ⭐ 1️⃣ 解析 transactionDetail（字符串 → 对象）
         let parsedItems: any[] = []
-        let amountFromDetail = 0;
 console.log("Raw Order Data:", item); // 输出每一条订单数据
         try {
-          console.log("transactionDetail:", item.raw.transactionDetail)
-          const detailObj = JSON.parse(item.raw.transactionDetail)
+          console.log("transactionDetail:", item.orderDetail)
+          const detailObj = JSON.parse(item.orderDetail)
           parsedItems = detailObj.items || []
-          amountFromDetail = detailObj.amount || 0;
         } catch (e) {
-          console.error("transactionDetail 解析失败", item.raw.transactionDetail)
+          console.error("transactionDetail 解析失败", item.orderDetail)
         }
 
         // ⭐ 2️⃣ 字段适配成前端需要的 items 结构
         const adaptedItems = parsedItems.map((it: any, index: number) => ({
-          id: `${item.raw.originalTraceNumber}-${index}`,
+          id: `${item.id}-${index}`,
           name: it.name,
           quantity: it.quantity,
           price: it.unitPrice, // ⚠️ 注意字段名转换
         }))
 
         return {
-          id: item.raw.originalTraceNumber,
-          total: amountFromDetail,
+          id: item.orderId,
+          total: item.orderAmount || 0,
           status: item.orderState,
-          createdAt: new Date(item.raw.createdAt),
+          createdAt: new Date(item.createdAt),
           items: adaptedItems,
-          merchantId:item.raw.merchantId
+          merchantId:item.merchantId
         }
       })
       console.log("Adapted Orders:", adaptedOrders);
