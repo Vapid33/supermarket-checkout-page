@@ -106,6 +106,7 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
           status: item.orderState,
           createdAt: new Date(item.raw.createdAt),
           items: adaptedItems,
+          merchantId:item.raw.merchantId
         }
       })
       console.log("Adapted Orders:", adaptedOrders);
@@ -268,7 +269,7 @@ const handlePreAuthSubmit = async () => {
     if (preAuthAction === "complete") {
       url = "http://172.20.10.6:8088/merchant/preAuth/complete"
       body = {
-        // merchantId: "898340149000005",
+        merchantId: selectedOrder.merchantId,
         orderId: selectedOrder.id,
         amount: Number(preAuthAmount),
       }
@@ -277,7 +278,7 @@ const handlePreAuthSubmit = async () => {
     if (preAuthAction === "cancel") {
       url = "http://172.20.10.6:8088/merchant/preAuth/cancel"
       body = {
-        // merchantId: "898340149000005",
+        merchantId: selectedOrder.merchantId,
         orderId: selectedOrder.id,
         amount: Number(preAuthAmount),
       }

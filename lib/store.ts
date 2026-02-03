@@ -22,6 +22,7 @@ export interface Order {
   refundAmount?: number
   createdAt: Date
   cashierId: string
+  merchantId?:string
 }
 
 // 模拟商品数据
