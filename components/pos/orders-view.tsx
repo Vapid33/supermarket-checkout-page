@@ -49,6 +49,7 @@ export function OrdersView({ onRefund }: OrdersViewProps) {
       preAuthCancel: true,
     },
     预授权完成: {
+      refund: true,
       preAuthCompleteCancel: true,
     },
     预授权撤销: {},
@@ -267,7 +268,7 @@ const handlePreAuthSubmit = async () => {
     if (preAuthAction === "complete") {
       url = "http://172.20.10.6:8088/merchant/preAuth/complete"
       body = {
-        merchantId: "898340149000005",
+        // merchantId: "898340149000005",
         orderId: selectedOrder.id,
         amount: Number(preAuthAmount),
       }
@@ -276,7 +277,7 @@ const handlePreAuthSubmit = async () => {
     if (preAuthAction === "cancel") {
       url = "http://172.20.10.6:8088/merchant/preAuth/cancel"
       body = {
-        merchantId: "898340149000005",
+        // merchantId: "898340149000005",
         orderId: selectedOrder.id,
         amount: Number(preAuthAmount),
       }
