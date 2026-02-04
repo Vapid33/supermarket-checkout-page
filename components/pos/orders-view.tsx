@@ -238,15 +238,15 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
 
   const refundOrder = async (referenceNumber: string) => {
     const res = await fetch(
-      "http://172.20.10.6:8088/merchant/ActiveConsumeCancel",
+      "http://172.20.10.6:8088/merchant/merchant/v2/refund",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          referenceNumber,
-          transactionAmount: refundAmount,
+          orderId:referenceNumber,
+          amount: refundAmount,
         }),
       }
     )
@@ -265,7 +265,7 @@ const handlePreAuthSubmit = async () => {
     let body: any = {}
 
     if (preAuthAction === "complete") {
-      url = "http://172.20.10.6:8088/merchant/preAuth/complete"
+      url = "http://172.20.10.6:8088/merchant/v2/preAuth/complete"
       body = {
         merchantId: selectedOrder.merchantId,
         orderId: selectedOrder.id,
@@ -274,7 +274,7 @@ const handlePreAuthSubmit = async () => {
     }
 
     if (preAuthAction === "cancel") {
-      url = "http://172.20.10.6:8088/merchant/preAuth/cancel"
+      url = "http://172.20.10.6:8088/merchant/v2/preAuth/cancel"
       body = {
         merchantId: selectedOrder.merchantId,
         orderId: selectedOrder.id,

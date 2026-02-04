@@ -25,7 +25,7 @@ export default function POSPage() {
         setLoading(true)
 
         const res = await fetch(
-          "http://172.20.10.6:8088/merchant/queryOrders",
+          "http://172.20.10.6:8088/merchant/v2/queryOrders",
           //"http://127.0.0.1:4523/m1/7468733-7203316-default/merchant/queryOrders",
         )
 
@@ -46,23 +46,23 @@ export default function POSPage() {
         //   items: [],
         // }))
 
-        const adaptedOrders: Order[] = result.data.map((item: any) => {
+        const adaptedOrders: Order[] = result.data.content.map((item: any) => {
           // ⭐ 1️⃣ 解析 transactionDetail（字符串 → 对象）
-          let parsedDetail: any = {}
-          try {
-            parsedDetail = JSON.parse(item.raw.transactionDetail);
-          } catch (e) {
-            console.error("transactionDetail 解析失败", item.raw.transactionDetail);
-          }
+          // let parsedDetail: any = {}
+          // try {
+          //   parsedDetail = JSON.parse(item.orderDetail);
+          // } catch (e) {
+          //   console.error("transactionDetail 解析失败", item.orderDetail);
+          // }
 
-          // 读取 transactionDetail 中的 amount
-          const amountFromDetail = parsedDetail.amount || 0;
+          // // 读取 transactionDetail 中的 amount
+          // const amountFromDetail = parsedDetail.amount || 0;
 
           return {
-            id: item.raw.originalTraceNumber,
-            total: amountFromDetail, // 使用 transactionDetail 中的 amount
+            id: item.orderId,
+            total: item.orderAmount || 0, // 使用 transactionDetail 中的 amount
             status: item.orderState,
-            createdAt: new Date(item.raw.originalTransactionTime),
+            createdAt: new Date(item.createdAt),
             items: [],
           };
         });
