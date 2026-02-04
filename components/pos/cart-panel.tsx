@@ -147,7 +147,7 @@ export function CartPanel({
         {isHotel ? "房间总价" : "应付金额"}
       </span>
       <span className="font-medium">
-        ¥{subtotal.toFixed(2)}
+        ${subtotal.toFixed(2)}
       </span>
     </div>
 
@@ -156,7 +156,7 @@ export function CartPanel({
       <div className="flex justify-between text-sm">
         <span className="text-muted-foreground">押金</span>
         <span className="font-medium">
-          ¥{deposit.toFixed(2)}
+          ${deposit.toFixed(2)}
         </span>
       </div>
     )}
@@ -166,7 +166,7 @@ export function CartPanel({
       <div className="flex justify-between pt-2 border-t font-semibold">
         <span>预授权总额</span>
         <span className="text-primary text-lg">
-          ¥{preAuthTotal.toFixed(2)}
+          ${preAuthTotal.toFixed(2)}
         </span>
       </div>
     )}
