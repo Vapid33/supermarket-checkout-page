@@ -203,7 +203,7 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
       setRefundLoading(true)
       setRefundMessage("退款正在发起，请稍等")
 
-      const result = await refundOrder(referenceNumber)
+      const result = await refundOrder(selectedOrder.merchantId, referenceNumber)
 
       // ⭐ 2️⃣ 接口返回
       if (result.statusCode !== "00") {
@@ -236,7 +236,7 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
   }
 
 
-  const refundOrder = async (referenceNumber: string) => {
+  const refundOrder = async (merchantId: string, referenceNumber: string) => {
     const res = await fetch(
       "http://172.20.10.6:8088/merchant/v2/refund",
       {
@@ -245,6 +245,7 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          merchantId: merchantId,
           orderId:referenceNumber,
           amount: refundAmount,
         }),
