@@ -15,10 +15,6 @@ export default function POSPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(false)
 
-  // useEffect(() => {
-  //   // 初始化模拟订单数据
-  //   setOrders(generateMockOrders())
-  // }, [])
   useEffect(() => {
     const fetchOrders = async () => {
       try {

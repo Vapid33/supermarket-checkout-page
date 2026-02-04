@@ -238,7 +238,7 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
 
   const refundOrder = async (referenceNumber: string) => {
     const res = await fetch(
-      "http://172.20.10.6:8088/merchant/merchant/v2/refund",
+      "http://172.20.10.6:8088/merchant/v2/refund",
       {
         method: "POST",
         headers: {
