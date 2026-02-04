@@ -193,17 +193,17 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
     }
   }
 
-  const handleRefund = async (referenceNumber: string) => {
+  const handleRefund = async (merchantId: string, referenceNumber: string) => {
     if (!selectedOrder || !refundAmount) return
 
     const amount = Number.parseFloat(refundAmount)
 
     try {
-      // ⭐ 1️⃣ 进入退款中状态
+      // ⭐ 1️⃣ 进入退款中状
       setRefundLoading(true)
       setRefundMessage("退款正在发起，请稍等")
 
-      const result = await refundOrder(selectedOrder.merchantId, referenceNumber)
+      const result = await refundOrder(merchantId, referenceNumber)
 
       // ⭐ 2️⃣ 接口返回
       if (result.statusCode !== "00") {
@@ -615,7 +615,7 @@ const handlePreAuthSubmit = async () => {
                 <Button
                   variant="destructive"
                   className="flex-1"
-                  onClick={() => handleRefund(selectedOrder.id)}
+                  onClick={() => handleRefund(selectedOrder.merchantId ?? "", selectedOrder.id)}
                   disabled={
                     refundLoading ||
                     !refundAmount ||
