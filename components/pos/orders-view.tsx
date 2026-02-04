@@ -284,7 +284,7 @@ const handlePreAuthSubmit = async () => {
 
     // ⭐⭐ 新增：预授权完成撤销
     if (preAuthAction === "completeCancel") {
-      url = "http://172.20.10.6:8088/merchant/preAuthCancel"
+      url = "http://172.20.10.6:8088/merchant/v2/preAuth/completeCancel"
       body = {
         referenceNumber: selectedOrder.id,
       }
