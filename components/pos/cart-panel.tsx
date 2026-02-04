@@ -24,7 +24,7 @@ export function CartPanel({
 }: CartPanelProps) {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
-  const deposit = isHotel ? itemCount * 100 : 0
+  const deposit = isHotel ? itemCount * 20 : 0
   const preAuthTotal = subtotal + deposit
 
 

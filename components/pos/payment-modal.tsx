@@ -100,7 +100,7 @@ export function PaymentModal({ open, onClose, method, total, items, onConfirm ,q
 
 const saveOrder = async () => {
   //await fetch("http://127.0.0.1:4523/m1/7468733-7203316-default/merchant/saveOrder", {
-  await fetch("http://172.20.10.6:8088/merchant/saveOrder", {
+  await fetch("http://172.20.10.6:8088/merchant/v2/saveOrder", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -116,6 +116,7 @@ const saveOrder = async () => {
         })),
         amount: total
       }),
+      state: method==="preAuth"?"预授权":"消费",
     }),
   })
 }

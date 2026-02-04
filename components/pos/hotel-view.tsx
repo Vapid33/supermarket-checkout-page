@@ -61,7 +61,7 @@ export function HotelView({ onNewOrder }: HotelBookingViewProps) {
   }, [nights])
 
   const totalAmount = cart.reduce(
-    (sum, item) => sum + (item.price + 100) * item.quantity,
+    (sum, item) => sum + (item.price + 20) * item.quantity,
     0
   )
 
