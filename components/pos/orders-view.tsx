@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Eye, Undo2, Calendar } from "lucide-react"
 import { Banknote, QrCode, CreditCard } from "lucide-react" // Import missing icons
 import { se } from "date-fns/locale"
-import { Loader2 ,ExternalLink} from "lucide-react"
+import { Loader2, ExternalLink } from "lucide-react"
 import { ref } from "process"
 interface OrdersViewProps {
   onRefund: (orderId: string, amount: number) => void
@@ -49,11 +49,12 @@ export function OrdersView({ onRefund }: OrdersViewProps) {
       preAuthCancel: true,
     },
     预授权完成: {
-      refund: true,
       preAuthCompleteCancel: true,
     },
     预授权撤销: {},
   } as const
+  const needAmount = preAuthAction !== "completeCancel"
+
 
   const can = (order: Order, action: keyof any) => {
     return Boolean((ORDER_ACTIONS as any)[order.status]?.[action])
@@ -81,7 +82,7 @@ export function OrdersView({ onRefund }: OrdersViewProps) {
       const adaptedOrders: Order[] = result.data.content.map((item: any) => {
         // ⭐ 1️⃣ 解析 transactionDetail（字符串 → 对象）
         let parsedItems: any[] = []
-console.log("Raw Order Data:", item); // 输出每一条订单数据
+        console.log("Raw Order Data:", item); // 输出每一条订单数据
         try {
           console.log("transactionDetail:", item.orderDetail)
           const detailObj = JSON.parse(item.orderDetail)
@@ -104,7 +105,7 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
           status: item.orderState,
           createdAt: new Date(item.createdAt),
           items: adaptedItems,
-          merchantId:item.merchantId
+          merchantId: item.merchantId
         }
       })
       console.log("Adapted Orders:", adaptedOrders);
@@ -119,7 +120,7 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
     try {
       setTxLoading(true)
       const res = await fetch(
-        "http://172.20.10.6:8088/merchant/queryOrderTransactions?orderId="+referenceNumber,
+        "http://172.20.10.6:8088/merchant/queryOrderTransactions?orderId=" + referenceNumber,
       )
 
       const result = await res.json()
@@ -175,7 +176,7 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
     setEndDate("")
   }
 
-    const shortenHash = (hash: string, start = 4, end = 4) => {
+  const shortenHash = (hash: string, start = 4, end = 4) => {
     if (!hash) return "--"
     if (hash.length <= start + end) return hash
     return `${hash.slice(0, start)}...${hash.slice(-end)}`
@@ -246,7 +247,7 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
         },
         body: JSON.stringify({
           merchantId: merchantId,
-          orderId:referenceNumber,
+          orderId: referenceNumber,
           amount: refundAmount,
         }),
       }
@@ -255,69 +256,69 @@ console.log("Raw Order Data:", item); // 输出每一条订单数据
     const json = await res.json()
     return json
   }
-const handlePreAuthSubmit = async () => {
-  if (!selectedOrder || !preAuthAction) return
+  const handlePreAuthSubmit = async () => {
+    if (!selectedOrder || !preAuthAction) return
 
-  try {
-    setPreAuthLoading(true)
-    setPreAuthMessage("")
-
-    let url = ""
-    let body: any = {}
-
-    if (preAuthAction === "complete") {
-      url = "http://172.20.10.6:8088/merchant/v2/preAuth/complete"
-      body = {
-        merchantId: selectedOrder.merchantId,
-        orderId: selectedOrder.id,
-        amount: Number(preAuthAmount),
-      }
-    }
-
-    if (preAuthAction === "cancel") {
-      url = "http://172.20.10.6:8088/merchant/v2/preAuth/cancel"
-      body = {
-        merchantId: selectedOrder.merchantId,
-        orderId: selectedOrder.id,
-        amount: Number(preAuthAmount),
-      }
-    }
-
-    // ⭐⭐ 新增：预授权完成撤销
-    if (preAuthAction === "completeCancel") {
-      url = "http://172.20.10.6:8088/merchant/v2/preAuth/completeCancel"
-      body = {
-        referenceNumber: selectedOrder.id,
-      }
-    }
-
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    })
-
-    const result = await res.json()
-    if (result.statusCode !== "00") {
-      throw new Error(result.msg || "操作失败")
-    }
-
-    setPreAuthMessage("操作成功")
-    await fetchOrders()
-
-    setTimeout(() => {
-      setShowPreAuthDialog(false)
-      setSelectedOrder(null)
-      setPreAuthAction(null)
-      setPreAuthAmount("")
+    try {
+      setPreAuthLoading(true)
       setPreAuthMessage("")
-    }, 1500)
-  } catch (e) {
-    setPreAuthMessage("操作失败，请重试")
-  } finally {
-    setPreAuthLoading(false)
+
+      let url = ""
+      let body: any = {}
+
+      if (preAuthAction === "complete") {
+        url = "http://172.20.10.6:8088/merchant/v2/preAuth/complete"
+        body = {
+          merchantId: selectedOrder.merchantId,
+          orderId: selectedOrder.id,
+          amount: Number(preAuthAmount),
+        }
+      }
+
+      if (preAuthAction === "cancel") {
+        url = "http://172.20.10.6:8088/merchant/v2/preAuth/cancel"
+        body = {
+          merchantId: selectedOrder.merchantId,
+          orderId: selectedOrder.id,
+          amount: Number(preAuthAmount),
+        }
+      }
+
+      // ⭐⭐ 新增：预授权完成撤销
+      if (preAuthAction === "completeCancel") {
+        url = "http://172.20.10.6:8088/merchant/v2/preAuth/completeCancel"
+        body = {
+          referenceNumber: selectedOrder.id,
+        }
+      }
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+
+      const result = await res.json()
+      if (result.statusCode !== "00") {
+        throw new Error(result.msg || "操作失败")
+      }
+
+      setPreAuthMessage("操作成功")
+      await fetchOrders()
+
+      setTimeout(() => {
+        setShowPreAuthDialog(false)
+        setSelectedOrder(null)
+        setPreAuthAction(null)
+        setPreAuthAmount("")
+        setPreAuthMessage("")
+      }, 1500)
+    } catch (e) {
+      setPreAuthMessage("操作失败，请重试")
+    } finally {
+      setPreAuthLoading(false)
+    }
   }
-}
 
 
 
@@ -410,7 +411,7 @@ const handlePreAuthSubmit = async () => {
                           setRefundAmount(order.total.toString())
                           setShowRefundDialog(true)
                         }}
-                       
+
                       >
                         消费撤销/退货
                       </Button>
@@ -430,19 +431,19 @@ const handlePreAuthSubmit = async () => {
                         预授权完成
                       </Button>
                     )}
-                      {can(order, "preAuthCompleteCancel") && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedOrder(order)
-                            setPreAuthAction("completeCancel")
-                            setShowPreAuthDialog(true)
-                          }}
-                        >
-                          预授权完成撤销
-                        </Button>
-                      )}
+                    {can(order, "preAuthCompleteCancel") && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedOrder(order)
+                          setPreAuthAction("completeCancel")
+                          setShowPreAuthDialog(true)
+                        }}
+                      >
+                        预授权完成撤销
+                      </Button>
+                    )}
 
                     {/* 预授权撤销 */}
                     {can(order, "preAuthCancel") && (
@@ -707,17 +708,20 @@ const handlePreAuthSubmit = async () => {
                   className="flex-1"
                   disabled={
                     preAuthLoading ||
-                    !preAuthAmount ||
-                    Number(preAuthAmount) <= 0
+                    (needAmount &&
+                      (!preAuthAmount || Number(preAuthAmount) <= 0))
                   }
-                  onClick={() => handlePreAuthSubmit()}
+                  onClick={handlePreAuthSubmit}
                 >
                   {preAuthLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    preAuthAction === "complete" ? "确认完成" : "确认撤销"
+                    preAuthAction === "complete"
+                      ? "确认完成"
+                      : "确认撤销"
                   )}
                 </Button>
+
               </div>
             </div>
           )}
