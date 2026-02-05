@@ -90,6 +90,7 @@ export function HotelView({ onNewOrder }: HotelBookingViewProps) {
 
   const qrValue = JSON.stringify({
     merchantId: "898340149000006",
+    terminalId: "02228293",
     referenceNumber,
     amount: totalAmount,
     transactionType: paymentMethod === "preAuth" ? "预授权" : "消费",
